@@ -13,6 +13,8 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.Unit;
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import frc.robot.Constants;
 
@@ -32,13 +34,13 @@ public class SwerveModule {
         //driveMotor.restoreFactoryDefaults();
         driveMotor.setIdleMode(IdleMode.kBrake);
         driveMotor.setInverted(swerveModuleConstants.driveMotorInverted);
-        driveMotor.setSmartCurrentLimit(20);
+        //driveMotor.setSmartCurrentLimit(20);
 
         turnMotor = new CANSparkMax(swerveModuleConstants.turnMotorId, MotorType.kBrushless);
         //turnMotor.restoreFactoryDefaults();
         turnMotor.setIdleMode(IdleMode.kBrake);
         turnMotor.setInverted(true);
-        turnMotor.setSmartCurrentLimit(20);
+        //turnMotor.setSmartCurrentLimit(20);
 
         driveEncoder = driveMotor.getEncoder();
         turnEncoder = turnMotor.getEncoder();
@@ -51,8 +53,10 @@ public class SwerveModule {
         absEncoder = new CANcoder(swerveModuleConstants.absoluteEncoderId); //new AnalogPotentiometer(swerveModuleConstants.absoluteEncoderId, 360, swerveModuleConstants.absoluteEncoderOffset);
         absolutePositionSignal = absEncoder.getAbsolutePosition();
         //absEncoder.getConfigurator().apply(new MagnetSensorConfigs().)
-        turnPIDController = new PIDController(0.001, 0, 0);
-        turnPIDController.enableContinuousInput(-180, 180);
+        turnPIDController = new PIDController(3.5, 0, 0);
+
+        //This is so that the PID knows that the turning wheels should go in a loop
+        turnPIDController.enableContinuousInput(-Math.PI, Math.PI);
 
         moduleId = swerveModuleConstants.moduleId;
         this.swerveModuleConstants = swerveModuleConstants;
@@ -64,9 +68,6 @@ public class SwerveModule {
         return absolutePositionSignal.refresh().getValue()*360;
     }
 
-    public double getAngleDeg(){
-        return Math.IEEEremainder(turnEncoder.getPosition(), 360);
-    }
 
     public Rotation2d getAngleRotation2d(){
         return Rotation2d.fromDegrees(getAbsAngleDeg());
@@ -90,13 +91,15 @@ public class SwerveModule {
         turnMotor.set(0);
     }
 
+    //If you want, you can try setting using the Neo relative encoders
+
     public void setSwerveModuleState(SwerveModuleState desiredState){
-        if (Math.abs(desiredState.speedMetersPerSecond) < 0.1){
+        if (Math.abs(desiredState.speedMetersPerSecond) < 0.01){
             desiredState.angle = lastAngle;
         }
         desiredState = SwerveModuleState.optimize(desiredState, getAngleRotation2d());
         driveMotor.set(desiredState.speedMetersPerSecond/Constants.PhysicalConstants.kPhysicalMaxSpeedMetersPerSec);
-        turnMotor.set(turnPIDController.calculate(getAbsAngleDeg(), desiredState.angle.getDegrees()));
+        turnMotor.set(turnPIDController.calculate(Units.degreesToRadians(getAbsAngleDeg()), Units.degreesToRadians(desiredState.angle.getDegrees())));
         lastAngle = desiredState.angle;
     }
 
