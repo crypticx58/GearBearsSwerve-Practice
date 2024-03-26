@@ -12,6 +12,7 @@ import com.revrobotics.CANSparkLowLevel.MotorType;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.Unit;
@@ -63,11 +64,13 @@ public class SwerveModule {
 
         resetEncoders();
     }
+    public SwerveModulePosition getSwerveModulePosition(){
+        return new SwerveModulePosition(getDriveDistanceMeters(), Rotation2d.fromDegrees(getAbsAngleDeg()));
+    }
 
     public double getAbsAngleDeg(){
         return absolutePositionSignal.refresh().getValue()*360;
     }
-
 
     public Rotation2d getAngleRotation2d(){
         return Rotation2d.fromDegrees(getAbsAngleDeg());
@@ -76,7 +79,9 @@ public class SwerveModule {
     public double getDriveSpeedMetersPerSec(){
         return driveEncoder.getVelocity();
     }
-
+    public double getDriveDistanceMeters(){
+        return driveEncoder.getPosition();
+    }
     public void resetEncoders(){
         driveEncoder.setPosition(0);
         turnEncoder.setPosition(getAbsAngleDeg());

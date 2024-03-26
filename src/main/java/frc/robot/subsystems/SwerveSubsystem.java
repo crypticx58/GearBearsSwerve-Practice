@@ -4,7 +4,9 @@ package frc.robot.subsystems;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -77,12 +79,28 @@ public class SwerveSubsystem extends SubsystemBase {
         backRight.stopMotors();
     }
 
+    public SwerveModuleState[] getModuleStates(){
+    return new SwerveModuleState[]{frontRight.getSwerveModuleState(),
+                                    frontLeft.getSwerveModuleState(),
+                                    backRight.getSwerveModuleState(),
+                                    backLeft.getSwerveModuleState()};
+    }
+    public SwerveModulePosition[] getModulePositions(){
+    return new SwerveModulePosition[]{frontRight.getSwerveModulePosition(),
+                                    frontLeft.getSwerveModulePosition(),
+                                    backRight.getSwerveModulePosition(),
+                                    backLeft.getSwerveModulePosition()};
+    }
+
     public void setModuleStates(SwerveModuleState[] desiredStates){
         SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, Constants.PhysicalConstants.kPhysicalMaxSpeedMetersPerSec);
         frontLeft.setSwerveModuleState(desiredStates[1]);
         frontRight.setSwerveModuleState(desiredStates[0]);
         backLeft.setSwerveModuleState(desiredStates[3]);
         backRight.setSwerveModuleState(desiredStates[2]);
+    }
+    public ChassisSpeeds getRobotRelativeSpeeds(){
+        return Constants.PhysicalConstants.kDriveKinematics.toChassisSpeeds(getModuleStates());
     }
 }
 
